@@ -1,6 +1,7 @@
 package com.fanql.androidhotfix.application;
 
 import android.app.Application;
+import com.fanql.commonlibrary.util.UIUtils;
 import com.fanql.hotfixlibrary.AndFixPatchManager;
 import com.fanql.netlibrary.RequestNetManager;
 
@@ -22,6 +23,8 @@ public class AndroidApplication extends Application {
         AndFixPatchManager.getInstance().initPatch(this);
         // 完成网络请求组件的初始化
         RequestNetManager.init();
+        // 上下文的赋值
+        UIUtils.initContext(this);
 
     }
 

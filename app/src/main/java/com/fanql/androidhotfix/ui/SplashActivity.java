@@ -28,21 +28,31 @@ public class SplashActivity extends BaseActivity {
                 Intent intent = new Intent(SplashActivity.this, FixService.class);
                 startService(intent);
 
+
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                    }
+                }, 5000);
+
             }
 
             @Override
             public void onFailure() {
 
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                    }
+                }, 5000);
+
             }
         });
 
-        Handler handler = new Handler();
-        handler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                startActivity(new Intent(SplashActivity.this, MainActivity.class));
-            }
-        }, 5000);
 
 
     }

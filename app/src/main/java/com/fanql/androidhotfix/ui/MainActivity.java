@@ -2,6 +2,7 @@ package com.fanql.androidhotfix.ui;
 
 import android.Manifest;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import com.fanql.androidhotfix.R;
@@ -12,10 +13,22 @@ import com.fanql.commonlibrary.util.ToastUtils;
 
 public class MainActivity extends BaseActivity {
 
+    /**
+     * apkpatch -f new.apk -t old.apk -o output1 -k lib.jks -p 123456 -a lib -e 123456
+     */
+    private void test() {
+
+        int i = 1/1;
+        Log.i("qinglin.fan", "修复");
+
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        test();
 
         // 打电话权限申请
         findViewById(R.id.btn_call_phone).setOnClickListener(new OnClickListener() {
