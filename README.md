@@ -5,17 +5,13 @@
 基于 AndFix 和 Tinker 的再次封装，用户引入该 module 之后，只需要稍稍修改下请求自己服务器的 Patch 接口，就可以直接进行线上 Bug 的修复。
 
 # 主要模块介绍
-1. commonlibrary 基础库
-  主要是提供一些基础的 UI, Utils, View, Adapter, ViewHolder 等。也就是公共的基础库。
+1. commonlibrary 基础库 主要是提供一些基础的 UI, Utils, View, Adapter, ViewHolder 等。也就是公共的基础库。
   
-2. netlibrary 网络库
-  主要是针对 OkHttp 库的一些封装，实现各种网络请求，包括文件上传，下载，我们的热修复插件下载就可以直接用这个库里的方法。
+2. netlibrary 网络库 主要是针对 OkHttp 库的一些封装，实现各种网络请求，包括文件上传，下载，我们的热修复插件下载就可以直接用这个库里的方法。
   
-3. hotfixlibrary 热修复库
-  主要是针对 Andfix Tinker 热修复的框架的封装，便于我们直接使用，不用关心具体逻辑。
+3. hotfixlibrary 热修复库 主要是针对 Andfix Tinker 热修复的框架的封装，便于我们直接使用，不用关心具体逻辑。
   
-4. app 主模块  
-  用户程序的入口。
+4. app 主模块 用户程序的入口。
   
 # 主要类及其方法介绍
 
