@@ -19,23 +19,25 @@
   
 # 主要类及其方法介绍
 
-1. 在 Application 类中，首先对部分模块进行初始化
+## 1. 在 Application 类中，首先对部分模块进行初始化
 
-  @Override
-    public void onCreate() {
-        super.onCreate();
-        sInstance = this;
+```java
+@Override
+public void onCreate() {
+       super.onCreate();
+       sInstance = this;
+       // 完成andFix的初始化
+       AndFixPatchManager.getInstance().initPatch(this);
+       // 完成网络请求组件的初始化
+       RequestNetManager.init();
+       // 上下文的赋值
+       UIUtils.initContext(this);
+ }
+```
 
-        // 完成andFix的初始化
-        AndFixPatchManager.getInstance().initPatch(this);
-        // 完成网络请求组件的初始化
-        RequestNetManager.init();
-        // 上下文的赋值
-        UIUtils.initContext(this);
+## 2. 在 SplashActivity 界面，启动服务去检查是否有新的热更新插件，同时比较版本
 
-    }
-
-2. 在 SplashActivity 界面，启动服务去检查是否有新的热更新插件，同时比较版本
+```java
 
     private void updatePatchCheck() {
         Request request = new Request();
@@ -79,11 +81,12 @@
 
             }
         });
-
     }
-
- 3. 下载 patch 文件，并且直接加载
+```    
+    
+ ## 3. 下载 patch 文件，并且直接加载
  
+ ```java
  private void downloadPatch() {
 
         Request request = new FileRequest();
@@ -112,7 +115,7 @@
             }
         });
     }
- 
+  ```
 
 
 
