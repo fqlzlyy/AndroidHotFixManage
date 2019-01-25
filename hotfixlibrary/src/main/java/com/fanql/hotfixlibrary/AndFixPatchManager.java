@@ -31,6 +31,7 @@ public class AndFixPatchManager {
     // 初始化andFix方法
     public void initPatch(Context context) {
         mPatchManager = new PatchManager(context);
+        // 当前的版本号
         mPatchManager.init("versionName");
         // 根据github说明，该方法越早调用越好
         mPatchManager.loadPatch();

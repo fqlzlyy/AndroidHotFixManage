@@ -3,8 +3,6 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 28
 
-
-
     defaultConfig {
         minSdkVersion 18
         targetSdkVersion 28
@@ -12,8 +10,10 @@ android {
         versionName "1.0"
 
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
-
+        // 需要加上这个设置 否则tinker会报错
+        javaCompileOptions.annotationProcessorOptions.includeCompileClasspath = true
     }
+
 
     buildTypes {
         release {
@@ -37,4 +37,13 @@ dependencies {
 
     // andFix 依赖
     implementation 'com.alipay.euler:andfix:0.5.0@aar'
+
+    api ("com.tencent.tinker:tinker-android-lib:${tinkerVersion}") { changing = true }
+    api ("com.tencent.tinker:tinker-android-anno:${tinkerVersion}") { changing = true }
+
+
+//    // 生成application
+//    api('com.tencent.tinker:tinker-android-anno:1.9.1')
+//    // tinker 核心类
+//    api('com.tencent.tinker:tinker-android-lib:1.9.1')
 }

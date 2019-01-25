@@ -26,6 +26,8 @@ public class SplashActivity extends BaseActivity {
             public void onSuccess() {
                 // 获取成功才去启动热更新检查服务
                 Intent intent = new Intent(SplashActivity.this, FixService.class);
+                // 设置是否使用tinker
+                intent.putExtra("isUseTinker", false);
                 startService(intent);
 
 

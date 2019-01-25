@@ -7,21 +7,23 @@ import android.os.Handler.Callback;
 import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 import android.util.Log;
 import com.fanql.commonlibrary.data.AppConstant;
 import com.fanql.commonlibrary.data.ServerAddress;
 import com.fanql.commonlibrary.util.AppUtils;
 import com.fanql.commonlibrary.util.PreUtils;
+import com.fanql.hotfixlibrary.patch.PatchInfoResponse;
+import com.fanql.hotfixlibrary.tinker.TinkerFixPatchManager;
 import com.fanql.netlibrary.RequestNetManager;
 import com.fanql.netlibrary.callback.CustomFileCallback;
+import com.fanql.netlibrary.callback.CustomJsonCallback;
 import com.fanql.netlibrary.exception.CustomOkHttpException;
 import com.fanql.netlibrary.request.FileRequest;
 import com.fanql.netlibrary.request.Request;
-import com.zhy.http.okhttp.callback.StringCallback;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import okhttp3.Call;
 
 /**
  * 专门用来进行热修复的服务 1. 检查是否有新的patch 2. 如果有就下载并加载新的patch,并进行加载,没有就停止当前服务
@@ -36,7 +38,12 @@ public class FixService extends Service {
     private static final int DOWN_LOAD_PATCH = 0x02;
 
 
-    private static final String SUFFIX = ".apatch";
+    private static final String ANDFIX_SUFFIX = ".apatch";
+    private static final String TINKER_SUFFIX = ".apk";
+
+    // 默认采取tinker修复方式
+    private static String SUFFIX = ".apk";
+    private boolean isUseTinker = false;
 
     private String mFixedPatchDir;
     private String mFixedPatchFile;
@@ -71,51 +78,51 @@ public class FixService extends Service {
 
 
         // only for test
-        request.url = "https://www.baidu.com";
-        request.params = new HashMap<>();
-        RequestNetManager.get(request, new StringCallback() {
-            @Override
-            public void onError(Call call, Exception e, int id) {
-
-            }
-
-            @Override
-            public void onResponse(String response, int id) {
-                Log.i(TAG, "response = " + response);
-
-            }
-        });
-
-//        RequestNetManager.post(request, new CustomJsonCallback<PatchInfoResponse>() {
+//        request.url = "https://www.baidu.com";
+//        request.params = new HashMap<>();
+//        RequestNetManager.get(request, new StringCallback() {
 //            @Override
-//            public void onSuccess(PatchInfoResponse responseObj) {
-//                String url = responseObj.data.downloadUrl;
-//                String smallVersionCode = responseObj.data.smallVersionCode;
-//                if (TextUtils.isEmpty(url)) {
-//                    stopSelf();
-//                    Log.i(TAG, "下载地址为空");
-//                } else {
-//                    if (!TextUtils.isEmpty(smallVersionCode)) {
-//                        // 判断小版本的code是否有更新
-//                        int smallVCode = Integer.parseInt(smallVersionCode);
-//                        if (smallVCode > PreUtils.getInt(AppConstant.PRE_KEY_SMALL_VERSION_CODE, 0)) {
-//                            mInnerHandler.sendEmptyMessage(DOWN_LOAD_PATCH);
-//                        } else {
-//                            stopSelf();
-//                        }
-//                    } else {
-//                        stopSelf();
-//                    }
-//                }
+//            public void onError(Call call, Exception e, int id) {
+//
 //            }
 //
 //            @Override
-//            public void onFailure(CustomOkHttpException exception) {
-//                String message = exception.message;
-//                Log.e(TAG, message);
+//            public void onResponse(String response, int id) {
+//                Log.i(TAG, "response = " + response);
 //
 //            }
 //        });
+
+        RequestNetManager.post(request, new CustomJsonCallback<PatchInfoResponse>() {
+            @Override
+            public void onSuccess(PatchInfoResponse responseObj) {
+                String url = responseObj.data.downloadUrl;
+                String smallVersionCode = responseObj.data.smallVersionCode;
+                if (TextUtils.isEmpty(url)) {
+                    stopSelf();
+                    Log.i(TAG, "下载地址为空");
+                } else {
+                    if (!TextUtils.isEmpty(smallVersionCode)) {
+                        // 判断小版本的code是否有更新
+                        int smallVCode = Integer.parseInt(smallVersionCode);
+                        if (smallVCode > PreUtils.getInt(AppConstant.PRE_KEY_SMALL_VERSION_CODE, 0)) {
+                            mInnerHandler.sendEmptyMessage(DOWN_LOAD_PATCH);
+                        } else {
+                            stopSelf();
+                        }
+                    } else {
+                        stopSelf();
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(CustomOkHttpException exception) {
+                String message = exception.message;
+                Log.e(TAG, message);
+
+            }
+        });
 
     }
 
@@ -125,14 +132,18 @@ public class FixService extends Service {
         request.url = ServerAddress.S_AND_FIX.DOWN_PATCH_URL;
         String destFileName = String.valueOf(System.currentTimeMillis()).concat(SUFFIX);
 
-        mFixedPatchFile = mFixedPatchDir.concat(destFileName);
+    mFixedPatchFile = mFixedPatchDir.concat(destFileName);
 
         // 传入目标文件夹和文件名
         RequestNetManager.download(request, new CustomFileCallback(mFixedPatchDir, destFileName) {
             @Override
             public void onSuccess(File responseObj) {
                 // 这个需要绝对路径
-                AndFixPatchManager.getInstance().addPatch(mFixedPatchFile);
+               if (isUseTinker) {
+                   TinkerFixPatchManager.loadPatch(mFixedPatchFile);
+               } else {
+                   AndFixPatchManager.getInstance().addPatch(mFixedPatchFile);
+               }
             }
 
             @Override
@@ -170,7 +181,9 @@ public class FixService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        isUseTinker = intent.getBooleanExtra("isUseTinker", false);
         mInnerHandler.sendEmptyMessage(UPDATE_PATCH_CHECK);
+
         return START_NOT_STICKY;
     }
 

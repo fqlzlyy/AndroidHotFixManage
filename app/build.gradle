@@ -1,5 +1,6 @@
 apply plugin: 'com.android.application'
 
+def bakPath = file("${buildDir}/bakApk/")
 android {
     compileSdkVersion 28
     defaultConfig {
@@ -9,7 +10,17 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        javaCompileOptions { annotationProcessorOptions { includeCompileClasspath = true } }
     }
+
+    sourceSets {
+        main() {
+            jniLibs.srcDirs = ['src/main/libs']
+            jni.srcDirs = [] //屏蔽掉默认的jni编译生成过程
+        }
+    }
+
+
 
     signingConfigs {
         release  {
@@ -23,7 +34,7 @@ android {
     buildTypes {
         release {
             // false 标识不混淆 true 标识混淆
-            minifyEnabled false
+            minifyEnabled true// 开启混淆才会生成mapping.txt文件
             signingConfig signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
@@ -41,4 +52,145 @@ dependencies {
     api project(path: ':commonlibrary')
     api project(path: ':hotfixlibrary')
 
+}
+
+ext {
+    tinkerEnable = true
+    tinkerOldApkPath = "${bakPath}/app-release-0125-17-20-36.apk"
+    tinkerID = "1.0"
+    tinkerApplyMappingPath = "${bakPath}/app-release-0125-17-20-36-mapping.txt"
+    tinkerApplyResourcePath = "${bakPath}/app-release-0125-17-20-36-R.txt"
+}
+
+def buildWithTinker() {
+    return ext.tinkerEnable
+}
+
+def getOldApkPath() {
+    return ext.tinkerOldApkPath
+}
+
+def getApplyMappingPath() {
+    return ext.tinkerApplyMappingPath
+}
+
+def getApplyResourceMappingPath() {
+    return ext.tinkerApplyResourcePath
+}
+
+def getTinkerIdValue() {
+    return ext.tinkerID
+}
+
+
+if (buildWithTinker()) {
+    //启用tinker
+    apply plugin: 'com.tencent.tinker.patch'
+
+    //所有tinker相关的参数配置
+    tinkerPatch {
+
+        oldApk = getOldApkPath() //指定old apk文件径
+
+        ignoreWarning = false   //不忽略tinker的警告，有则中止patch文件的生成
+
+        useSign = true  //强制patch文件也使用签名
+
+        tinkerEnable = buildWithTinker(); //指定是否启用tinker
+
+        buildConfig {
+
+            applyMapping = getApplyMappingPath()  //指定old apk打包时所使用的混淆文件
+
+            applyResourceMapping = getApplyResourceMappingPath()  //指定old apk的资源文件
+
+            tinkerId = getTinkerIdValue() //指定TinkerID
+
+            keepDexApply = false
+        }
+
+        dex {
+
+            dexMode = "jar" //jar、raw
+            pattern = ["classes*.dex", "assets/secondary-dex-?.jar"] //指定dex文件目录
+            loader = ["com.fanql.androidfix.application.AndroidTinkerApplication"] //指定加载patch文件时用到的类
+        }
+
+        lib {
+
+            pattern = ["libs/*/*.so"]
+        }
+
+        res {
+
+            pattern = ["res/*", "assets/*", "resources.arcs", "AndoridManifest.xml"]
+            //指定tinker可以修改的资源路径
+
+            ignoreChange = ["assets/sample_meta.txt"] //指定不受影响的资源路径
+
+            largeModSize = 100 //资源修改大小默认值
+        }
+
+        packageConfig {
+
+            configField("patchMessage", "fix the 1.0 version's bugs")
+
+            configField("patchVersion", "1.0")
+        }
+    }
+
+
+    List<String> flavors = new ArrayList<>();
+    project.android.productFlavors.each { flavor ->
+        flavors.add(flavor.name)
+    }
+    boolean hasFlavors = flavors.size() > 0
+    /**
+     * bak apk and mapping
+     */
+    android.applicationVariants.all { variant ->
+        def taskName = variant.name
+        println "taskName is  ${taskName}"
+        def date = new Date().format("MMdd-HH-mm-ss")
+
+        tasks.all {
+            if ("assemble${taskName.capitalize()}".equalsIgnoreCase(it.name)) {
+
+                it.doLast {
+                    copy {
+                        println "variant.baseName is  ${variant.baseName}"// release
+                        println "project.name is  ${project.name}"//app
+
+
+                        def fileNamePrefix = "${project.name}-${variant.baseName}"
+                        def newFileNamePrefix = hasFlavors ? "${fileNamePrefix}" : "${fileNamePrefix}-${date}"
+
+                        def destPath = hasFlavors ? file("${bakPath}/${project.name}-${date}/${variant.flavorName}") : bakPath
+
+                        println variant.outputs.first().outputFile
+                        println fileNamePrefix //app-release
+                        println newFileNamePrefix//app-release-时间搓
+
+                        from variant.outputs.first().outputFile
+                        into destPath
+                        rename { String fileName ->
+                            fileName.replace("${fileNamePrefix}.apk", "${newFileNamePrefix}.apk")
+                        }
+
+                        from "${buildDir}/outputs/mapping/${variant.dirName}/mapping.txt"
+                        into destPath
+                        rename { String fileName ->
+                            fileName.replace("mapping.txt", "${newFileNamePrefix}-mapping.txt")
+                        }
+
+                        from "${buildDir}/intermediates/symbols/${variant.dirName}/R.txt"
+                        into destPath
+                        rename { String fileName ->
+                            fileName.replace("R.txt", "${newFileNamePrefix}-R.txt")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
