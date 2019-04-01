@@ -43,5 +43,4 @@ public class TinkerFixPatchManager {
         }
         return null;
     }
-
 }

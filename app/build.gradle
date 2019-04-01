@@ -4,7 +4,7 @@ def bakPath = file("${buildDir}/bakApk/")
 android {
     compileSdkVersion 28
     defaultConfig {
-        applicationId "com.fanql.androidhotfix"
+        applicationId "com.fanql.androidhoTtfix"
         minSdkVersion 18
         targetSdkVersion 28
         versionCode 1

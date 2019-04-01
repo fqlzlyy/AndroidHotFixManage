@@ -16,6 +16,7 @@ public abstract class CustomJsonCallback<T extends BaseResponse> extends Callbac
         String string = response.body().string();
         Class<T> entityClass = (Class<T>) ((ParameterizedType) getClass().getGenericSuperclass()).getActualTypeArguments()[0];
         return new Gson().fromJson(string, entityClass);
+
     }
 
     @Override

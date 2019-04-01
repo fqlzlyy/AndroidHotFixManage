@@ -19,4 +19,6 @@ public class NetConstant {
     public static final int SUCCESS_CODE = 1000;
 
 
+
+
 }
